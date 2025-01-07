@@ -1,6 +1,6 @@
 const Express = require("express")
 const AuthRouter = Express.Router();
-const { signup, login, resetpassword, UserGet, updateUserStatus, UserListIdDelete, verifyToken, profilegettoken, UserUpdate } = require("../controller/AuthController");
+const { signup, login, resetpassword, UserGet, updateUserStatus, UserListIdDelete, verifyToken, profilegettoken, UserUpdate, forgotlinkrecord, forgotpassword } = require("../controller/AuthController");
 
 AuthRouter.post("/signup", signup);
 
@@ -17,5 +17,10 @@ AuthRouter.delete("/delete-user", UserListIdDelete);
 AuthRouter.get("/user-get", verifyToken, profilegettoken);
 
 AuthRouter.put("/update-user", UserUpdate);
+
+AuthRouter.put("/forget-user", forgotlinkrecord);
+
+AuthRouter.put("/forget-password", forgotpassword);
+
 
 module.exports = AuthRouter
