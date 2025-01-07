@@ -10,17 +10,13 @@ const logger = require("../utils/Logger");
 
 exports.verifyToken = async (req, res, next) => {
   try {
-    // Fetch the Authorization header
     let authHeader = req.headers.authorization || req.headers.Authorization;
-    // Check if the header exists and starts with "Bearer"
     if (!authHeader || !authHeader.startsWith("Bearer")) {
       return res.status(400).json({
         status: false,
         message: "Token is missing or malformed",
       });
     }
-
-    // Extract the token
     let token = authHeader.split(" ")[1];
     if (!token) {
       return res.status(400).json({
@@ -28,8 +24,6 @@ exports.verifyToken = async (req, res, next) => {
         message: "Token is missing",
       });
     }
-
-    // Verify the token
     const decode = await promisify(jwt.verify)(
       token,
       process.env.JWT_SECRET_KEY
@@ -41,8 +35,6 @@ exports.verifyToken = async (req, res, next) => {
         message: "Unauthorized or invalid token",
       });
     }
-
-    // Check the user in the database
     const user = await User.findById(decode.id);
     if (!user) {
       return res.status(404).json({
@@ -50,8 +42,6 @@ exports.verifyToken = async (req, res, next) => {
         message: "User not found",
       });
     }
-
-    // Attach user to request object and proceed
     req.User = user;
     next();
   } catch (err) {
@@ -62,7 +52,6 @@ exports.verifyToken = async (req, res, next) => {
     });
   }
 };
-
 
 const signToken = async (id) => {
   const token = jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
@@ -77,9 +66,6 @@ const signEmail = async (id) => {
   });
   return token;
 };
-
-
-
 
 exports.signup = catchAsync(async (req, res) => {
   try {
@@ -117,9 +103,6 @@ exports.signup = catchAsync(async (req, res) => {
   }
 });
 
-
-
-
 exports.login = catchAsync(async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -156,7 +139,7 @@ exports.login = catchAsync(async (req, res) => {
     //     message: "Your account is not verified. Please verify it.",
     //   });
     // }
-    if (role !== "user") {
+    if (role !== "staff") {
       logger.error("Access denied. Only user can log in.")
       return validationErrorResponse(res, 'Access denied. Only user can log in.');
     }
@@ -168,8 +151,6 @@ exports.login = catchAsync(async (req, res) => {
     return errorResponse(res, error || "Internal Server Error", 500);
   }
 });
-
-
 
 exports.resetpassword = catchAsync(async (req, res) => {
   try {
@@ -195,7 +176,7 @@ exports.UserGet = catchAsync(async (req, res) => {
     const limit = parseInt(req.query.limit) || 25;
     const search = req.query.search || "";
     let userData, totalPages, totaluser;
-    const filter = { role: "user", isDeleted: false };
+    const filter = { role: "staff", isDeleted: false };
     const skip = (page - 1) * limit;
     const users = await User.find(filter)
       .select("-password")
@@ -233,7 +214,6 @@ exports.UserGet = catchAsync(async (req, res) => {
   }
 });
 
-
 exports.updateUserStatus = catchAsync(async (req, res) => {
   try {
     const { _id, user_status } = req.body;
@@ -255,7 +235,6 @@ exports.updateUserStatus = catchAsync(async (req, res) => {
     return errorResponse(res, error || "Internal Server Error", 500);
   }
 });
-
 
 exports.UserListIdDelete = catchAsync(async (req, res) => {
   try {
@@ -279,8 +258,6 @@ exports.UserListIdDelete = catchAsync(async (req, res) => {
     return errorResponse(res, 'Internal Server Error. Please try again later.', errors);
   }
 });
-
-
 
 exports.profilegettoken = catchAsync(async (req, res) => {
   try {
@@ -368,25 +345,24 @@ exports.forgotlinkrecord = catchAsync(async (req, res) => {
 }
 );
 
-exports.forgotpassword = catchAsync(
-  async (req, res) => {
-    try {
-      const { token, newPassword } = req.body;
-      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      const user = await User.findById(decoded.id);
-      if (!user) {
-        return errorResponse(res, "User not found", 404);
-      }
-      user.password = await bcrypt.hash(newPassword, 12);
-      await user.save();
-      return successResponse(res, "Password has been successfully reset");
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        return errorResponse(res, "Token has expired. Please generate a new token.", 401);
-      }
-      console.error("Error in password reset process:", error);
-      logger.error("Error in password reset process:", error);
-      return errorResponse(res, "Failed to reset password");
+exports.forgotpassword = catchAsync(async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return errorResponse(res, "User not found", 404);
     }
+    user.password = await bcrypt.hash(newPassword, 12);
+    await user.save();
+    return successResponse(res, "Password has been successfully reset");
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return errorResponse(res, "Token has expired. Please generate a new token.", 401);
+    }
+    console.error("Error in password reset process:", error);
+    logger.error("Error in password reset process:", error);
+    return errorResponse(res, "Failed to reset password");
   }
+}
 );
