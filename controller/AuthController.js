@@ -6,7 +6,6 @@ const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const ForgetPassword = require("../emailTemplates/ForgetPassword");
 const { validationErrorResponse, errorResponse, successResponse } = require("../utils/ErrorHandling");
-const VerifyAccount = require("../emailTemplates/Otp");
 const logger = require("../utils/Logger");
 
 exports.verifyToken = async (req, res, next) => {
@@ -64,9 +63,7 @@ exports.verifyToken = async (req, res, next) => {
   }
 };
 
-function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000);
-}
+
 const signToken = async (id) => {
   const token = jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
     expiresIn: "14400m",
@@ -246,7 +243,7 @@ exports.updateUserStatus = catchAsync(async (req, res) => {
     }
     const user = await User.findById(_id);
     if (!user) {
-      return validationErrorResponse(res, 'User not found.');
+      return validationErrorResponse(res, { user: 'User not found.' });
     }
     const newStatus = user.user_status === "active" ? "inactive" : "active";
     user.user_status = newStatus;
@@ -265,7 +262,7 @@ exports.UserListIdDelete = catchAsync(async (req, res) => {
     const { Id } = req.body;
     if (!Id) {
       logger.warn({ message: "User ID is required.", })
-      return validationErrorResponse(res, 'User ID is required.');
+      return validationErrorResponse(res, { Id: 'User ID is required' });
     }
     const record = await User.findOneAndUpdate(
       { _id: Id, isDeleted: false },
@@ -313,7 +310,7 @@ exports.UserUpdate = catchAsync(async (req, res) => {
     const { Id, username, name, email, password, phone_number, role } = req.body;
     if (!Id) {
       logger.warn({ message: 'User ID is required', });
-      return validationErrorResponse(res, "User ID is required.",)
+      return validationErrorResponse(res, { Id: 'User ID is required' });
     }
     const updatedRecord = await User.findByIdAndUpdate(
       Id,
@@ -333,42 +330,42 @@ exports.UserUpdate = catchAsync(async (req, res) => {
 });
 
 exports.forgotlinkrecord = catchAsync(async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (!email) {
-        return validationErrorResponse(res, { email: 'Email is required' });
-      }
-      const record = await User.findOne({ email: email });
-      if (!record) {
-        return errorResponse(res, "No user found with this email", 404);
-      }
-      const token = await signEmail(record._id);
-      const resetLink = `https://user-event.vercel.app/forgotpassword/${token}`;
-      const customerUser = record.username;
-      let transporter = nodemailer.createTransport({
-        host: process.env.MAIL_HOST, port: process.env.MAIL_PORT, secure: true,
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-      const emailHtml = ForgetPassword(resetLink, customerUser);
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: record.email,
-        subject: "Reset Your Password",
-        html: emailHtml,
-      });
-
-
-      return successResponse(res, "Email has been sent to your registered email");
-
-    } catch (error) {
-      console.error("Error in forgot password process:", error);
-      logger.error("Error in forgot password process:", error);
-      return errorResponse(res, "Failed to send email");
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return validationErrorResponse(res, { email: 'Email is required' });
     }
+    const record = await User.findOne({ email: email });
+    if (!record) {
+      return errorResponse(res, "No user found with this email", 404);
+    }
+    const token = await signEmail(record._id);
+    const resetLink = `https://user-event.vercel.app/forgotpassword/${token}`;
+    const customerUser = record.username;
+    let transporter = nodemailer.createTransport({
+      host: process.env.MAIL_HOST, port: process.env.MAIL_PORT, secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    const emailHtml = ForgetPassword(resetLink, customerUser);
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: record.email,
+      subject: "Reset Your Password",
+      html: emailHtml,
+    });
+
+
+    return successResponse(res, "Email has been sent to your registered email");
+
+  } catch (error) {
+    console.error("Error in forgot password process:", error);
+    logger.error("Error in forgot password process:", error);
+    return errorResponse(res, "Failed to send email");
   }
+}
 );
 
 exports.forgotpassword = catchAsync(
@@ -393,10 +390,3 @@ exports.forgotpassword = catchAsync(
     }
   }
 );
-
-
-
-
-
-
-
