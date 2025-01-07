@@ -12,10 +12,8 @@ mongoose.connect(process.env.DB_URL, {
    family: 4
 })
    .then(() => {
-      // console.log('MongoDB connected successfully');
       logger.info('MongoDB connected successfully');
    })
    .catch((err) => {
-      // console.error('MongoDB CONNECTION ERROR =>>: ', err);
       logger.error('MongoDB CONNECTION ERROR =>>: ', err);
    });

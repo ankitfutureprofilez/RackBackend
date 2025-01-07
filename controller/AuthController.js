@@ -1,11 +1,10 @@
 const jwt = require("jsonwebtoken");
 const catchAsync = require("../utils/catchAsync");
-const User = require("../model/User");
+const User = require("../model/AuthModal");
 const { promisify } = require("util");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const ForgetPassword = require("../emailTemplates/ForgetPassword");
-const Booking = require("../model/Booking");
 const { validationErrorResponse, errorResponse, successResponse } = require("../utils/ErrorHandling");
 const VerifyAccount = require("../emailTemplates/Otp");
 const logger = require("../utils/Logger");
@@ -66,7 +65,7 @@ exports.verifyToken = async (req, res, next) => {
 };
 
 function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit OTP
+  return Math.floor(100000 + Math.random() * 900000);
 }
 const signToken = async (id) => {
   const token = jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
@@ -83,67 +82,17 @@ const signEmail = async (id) => {
 };
 
 
-const filterUsers = async (username) => {
-  try {
-    let filter = {};
-    // Add `username` to filter for partial match
-    if (username && username.trim() !== "") {
-      filter.username = { $regex: username, $options: "i" }; // Partial match with case-insensitive regex
-    }
-    // Fetch users based on the filter
-    const users = await User.find(filter).select("-password");
 
-    // Return the users found or an appropriate message if no users are found
-
-    // Return users if found
-    return users;
-  } catch (error) {
-    console.error("Error fetching booking:", error);
-    logger.error("Error fetching booking:", error);
-    return res.status(500).json({
-      status: false,
-      message: "An error occurred while fetching bookings.",
-      error: error.message,
-    });
-  }
-};
-
-// exports.userfilter = catchAsync(async (req, res, next) => {
-//   const { username, user_status } = req.body; // Use req.body for body params, or req.query for query params
-
-//   // Use the filterUsers function to get the filtered users
-//   const result = await filterUsers(username, user_status);
-
-//   // Return the result as the response
-//   res.status(result.status ? 200 : 500).json(result);
-// });
 
 exports.signup = catchAsync(async (req, res) => {
   try {
-    const {
-      email,
-      password,
-      username,
-      address,
-      phone_number,
-      country_code,
-      phone_code,
-      country,
-      state,
-      DOB,
-      city,
-    } = req.body;
-
-    // Check if required fields are provided
-    if (!password || !phone_number || !username || !email || !address || !country || !city) {
-      return res.status(401).json({
-        status: false,
+    const { username, name, email, password, phone_number, role } = req.body;
+    if (!password || !phone_number || !username || !email || !name || !role) {
+      logger.error({
         message: 'All fields are required',
       });
+      return validationErrorResponse(res, 'All fields are required');
     }
-
-    // Check if user already exists
-    // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { phone_number }] });
     if (existingUser) {
       const errors = {};
@@ -153,361 +102,109 @@ exports.signup = catchAsync(async (req, res) => {
       if (existingUser.phone_number === phone_number) {
         errors.phone_number = 'Phone number is already in use!';
       }
-      return res.status(400).json({
-        status: false,
-        message: 'Email or phone number already exists',
-        errors,
-      });
+      logger.error(errors)
+      return errorResponse(res, 'Email or phone number already exists', errors);
     }
-
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Create new user record
     const record = new User({
-      email,
-      country,
-      state,
-      phone_code,
-      country_code,
-      city,
+      username, name, email, phone_number, role,
       password: hashedPassword,
-      username,
-      DOB,
-      address,
-      phone_number,
     });
 
     const result = await record.save();
 
-    if (result) {
-      const id = record._id;
-      const token = jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
-        expiresIn: "24h",
-      });
-      const resetLink = `https://user-event.vercel.app/verify/${token}`;
-      const customerUser = record.username;
+    return successResponse(res, "SucessFully Signup", 200);
 
-      let transporter = nodemailer.createTransport({
-        host: process.env.MAIL_HOST, port: process.env.MAIL_PORT, secure: true,
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-
-      const emailHtml = VerifyAccount(resetLink, customerUser);
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: result.email,
-        subject: "Verify your Account",
-        html: emailHtml,
-      });
-
-      return successResponse(res, "You have been registered successfully !!", 201);
-    } else {
-      return errorResponse(res, "Failed to create user.", 500);
-    }
-  } catch (error) {
-    return errorResponse(res, error.message || "Internal Server Error", 500);
-  }
-});
-
-exports.OTP = catchAsync(async (req, res) => {
-  try {
-    const {
-      email,
-      password,
-      username,
-      address,
-      phone_number,
-      country_code,
-      phone_code,
-      country,
-      state,
-      DOB,
-      city,
-    } = req.body;
-
-    // Check if required fields are provided
-    if (!password || !phone_number || !username || !email || !address || !country || !city) {
-      return res.status(401).json({
-        status: false,
-        message: 'All fields are required',
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ $or: [{ email }, { phone_number }] });
-    if (existingUser) {
-      const errors = {};
-      if (existingUser.email === email) {
-        errors.email = 'Email is already in use!';
-      }
-      if (existingUser.phone_number === phone_number) {
-        errors.phone_number = 'Phone number is already in use!';
-      }
-      return res.status(400).json({
-        status: false,
-        message: 'Email or phone number already exists',
-        errors,
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    const otp = generateOTP();
-
-    const record = new User({
-      email,
-      country,
-      state,
-      phone_code,
-      country_code,
-      city,
-      password: hashedPassword,
-      username,
-      DOB,
-      address,
-      phone_number,
-      OTP : otp,
-    });
-
-    const result = await record.save();
-
-    if (result) {
-      const customerUser = record.username;
-      let transporter = nodemailer.createTransport({
-        host: process.env.MAIL_HOST, port: process.env.MAIL_PORT, secure: true,
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-
-      const emailHtml = VerifyAccount(otp, customerUser);
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: result.email,
-        subject: "Verify your Account",
-        html: emailHtml,
-      });
-
-      return successResponse(res, "OTP has been sent to your email!", 201);
-    } else {
-      return errorResponse(res, "Failed to create user.", 500);
-    }
   } catch (error) {
     return errorResponse(res, error.message || "Internal Server Error", 500);
   }
 });
 
 
-exports.VerifyOtp = catchAsync(async (req, res, next) => {
-  try {
-    const { email, OTP } = req.body;
 
-    if (!email || !OTP) {
-      return res.status(401).json({
-        status: false,
-        message: "Email and OTP are required!",
+
+exports.login = catchAsync(async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
+
+    if (!email || !password) {
+      logger.error({
+        message: 'Email and password are required',
       });
+      return validationErrorResponse(res, 'Email and password are required!');
+    }
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      logger.error({ message: "Invalid Email or password", })
+      return validationErrorResponse(res, 'Invalid Email or password');
     }
 
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      logger.error("Incorrect password. Please try again.")
+      return validationErrorResponse(res, 'Incorrect password. Please try again.');
+    }
+
+    if (user.user_status === "inactive") {
+      logger.error({ message: "Your account is inactive. Please contact support.", })
+      return validationErrorResponse(res, 'Your account is inactive. Please contact support.');
+    }
+
+    // if (!user.verified) {
+    //   logger.error({message : "Your account is not verified. Please verify it.",})
+    //   return res.status(403).json({
+    //     status: false,
+    //     message: "Your account is not verified. Please verify it.",
+    //   });
+    // }
+    if (role !== "user") {
+      logger.error("Access denied. Only user can log in.")
+      return validationErrorResponse(res, 'Access denied. Only user can log in.');
+    }
+    const token = await signToken(user._id);
+    return successResponse(res, "Login Successfully!", token, 200);
+
+  } catch (error) {
+    logger.error(error)
+    return errorResponse(res, error || "Internal Server Error", 500);
+  }
+});
+
+
+
+exports.resetpassword = catchAsync(async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({
-        status: false,
-        message: "Invalid Email or OTP",
-      });
+      return validationErrorResponse(res, 'User not found');
     }
-
-    if (user.OTP != OTP) {
-      return res.status(401).json({
-        status: false,
-        message: "Invalid OTP",
-      });
-    }
-
-    user.verified = true;
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    user.password = hashedPassword;
     await user.save();
-
-    const token = await signToken(user._id);
-    res.json({
-      status: true,
-      message: "Your account has been verified.",
-      token,
-    });
+    return successResponse(res, "Password has been reset successfully!");
   } catch (error) {
-    return res.status(500).json({
-      error,
-      message: "An unknown error occurred. Please try later.",
-    });
+    logger.error(error)
+    return errorResponse(res, error || "Internal Server Error", 500);
   }
 });
 
-
-exports.adminlogin = catchAsync(async (req, res, next) => {
-  try {
-    const { email, password, role } = req.body;
-
-    // Check if email and password are provided
-    if (!email || !password) {
-      return res.status(401).json({
-        status: false,
-        message: "Email and password are required!",
-      });
-    }
-
-    // Find the user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({
-        status: false,
-        message: "Invalid Email or password",
-      });
-    }
-
-    // Validate password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({
-        status: false,
-        message: "Incorrect password. Please try again.",
-      });
-    }
-
-    // Check if the user account is inactive
-    if (user.user_status === "inactive") {
-      return res.status(403).json({
-        status: false,
-        message: "Your account is inactive. Please contact support.",
-      });
-    }
-
-    // Check if the user is verified
-    if (!user.verified) {
-      return res.status(403).json({
-        status: false,
-        message: "Your account is not verified. Please verify it.",
-      });
-    }
-
-    // Validate user role
-    if (user.role !== role) {
-      return res.status(403).json({
-        status: false,
-        message: "Access denied. Only admins can log in.",
-      });
-    }
-
-    // Generate a token for the user
-    const token = await signToken(user._id);
-    res.json({
-      status: true,
-      message: "Login Successfully!",
-      token,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      error,
-      message: "An unknown error occurred. Please try later.",
-    });
-  }
-});
-
-exports.login = catchAsync(async (req, res, next) => {
-  try {
-    const { email, password, role } = req.body;
-
-    // Check if email and password are provided
-    if (!email || !password) {
-      return res.status(401).json({
-        status: false,
-        message: "Email and password are required!",
-      });
-    }
-
-    // Find the user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({
-        status: false,
-        message: "Invalid Email or password",
-      });
-    }
-
-    // Validate password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({
-        status: false,
-        message: "Incorrect password. Please try again.",
-      });
-    }
-
-    // Check if the user account is inactive
-    if (user.user_status === "inactive") {
-      return res.status(403).json({
-        status: false,
-        message: "Your account is inactive. Please contact support.",
-      });
-    }
-
-    // Check if the user is verified
-    if (!user.verified) {
-      return res.status(403).json({
-        status: false,
-        message: "Your account is not verified. Please verify it.",
-      });
-    }
-
-    // Validate user role
-    if (user.role !== "user") {
-      return res.status(403).json({
-        status: false,
-        message: "Access denied. Only user can log in.",
-      });
-    }
-
-    // Generate a token for the user
-    const token = await signToken(user._id);
-    res.json({
-      status: true,
-      message: "Login Successfully!",
-      token,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      error,
-      message: "An unknown error occurred. Please try later.",
-    });
-  }
-});
-
-
-exports.profile = catchAsync(async (req, res, next) => {
+exports.UserGet = catchAsync(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 25;
     const search = req.query.search || "";
     let userData, totalPages, totaluser;
-
-    // Fetch users based on the filter
     const filter = { role: "user", isDeleted: false };
-    const skip = (page - 1) * limit; // Calculate skip value
-
+    const skip = (page - 1) * limit;
     const users = await User.find(filter)
       .select("-password")
       .sort({ created_at: -1 })
       .skip(skip)
       .limit(limit);
-
-    const updates = users.map(async (user) => {
-      const enquiryCount = await Booking.countDocuments({ userId: user._id }); // Count bookings for the user
-      return User.updateOne({ _id: user._id }, { $set: { enquiry_count: enquiryCount } }); // Update user
-    });
-
     if (search === "") {
       const skip = (page - 1) * limit;
       totaluser = await User.countDocuments();
@@ -522,23 +219,20 @@ exports.profile = catchAsync(async (req, res, next) => {
       totalPages = 1;
       totaluser = userData;
     }
-    res.status(200).json({
-      data: {
-        userData: userData,
-        totaluser: totaluser,
-        totalPages: totalPages,
-        currentPage: page,
-        perPage: limit,
-        nextPage: page < totalPages ? page + 1 : null,
-        previousPage: page > 1 ? page - 1 : null,
-      },
-      msg: "User Get",
-    });
+    const responseData = {
+      userData: userData,
+      totaluser: totaluser,
+      totalPages: totalPages,
+      currentPage: page,
+      perPage: limit,
+      nextPage: page < totalPages ? page + 1 : null,
+      previousPage: page > 1 ? page - 1 : null,
+    };
+
+    return successResponse(res, "User data fetched successfully", responseData);
   } catch (error) {
-    res.status(500).json({
-      msg: "Failed to fetch User get",
-      error: error.message,
-    });
+    logger.error(error)
+    return errorResponse(res, error || "Internal Server Error", 500);
   }
 });
 
@@ -547,62 +241,31 @@ exports.updateUserStatus = catchAsync(async (req, res) => {
   try {
     const { _id, user_status } = req.body;
     if (!_id || !user_status) {
-      return res.status(400).json({
-        message: "User ID and status are required.",
-        status: false,
-      });
+      logger.warn({ message: 'User ID and status are required', });
+      return validationErrorResponse(res, 'User ID and status are required.');
     }
     const user = await User.findById(_id);
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-        status: false,
-      });
+      return validationErrorResponse(res, 'User not found.');
     }
     const newStatus = user.user_status === "active" ? "inactive" : "active";
     user.user_status = newStatus;
     await user.save();
+    return successResponse(res, `User status updated to ${user?.user_status}`, user, 200);
 
-    res.status(200).json({
-      message: `User status updated to ${user?.user_status}`,
-      status: true,
-      data: user,
-    });
   } catch (error) {
-    console.error(error);
     logger.error(error);
-    res.status(500).json({
-      message: "Internal Server Error",
-      status: false,
-    });
+    return errorResponse(res, error || "Internal Server Error", 500);
   }
 });
 
-exports.resetpassword = catchAsync(async (req, res) => {
-  try {
-    const { email, newPassword } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-    user.password = hashedPassword;
-    await user.save();
-    res.json({ message: "Password has been reset successfully!" });
-  } catch (error) {
-    res.status(500).json({ message: "Error resetting password", error });
-  }
-});
 
-exports.UserListIdDelete = catchAsync(async (req, res, next) => {
+exports.UserListIdDelete = catchAsync(async (req, res) => {
   try {
     const { Id } = req.body;
     if (!Id) {
-      return res.status(400).json({
-        status: false,
-        message: "User ID is required.",
-      });
+      logger.warn({ message: "User ID is required.", })
+      return validationErrorResponse(res, 'User ID is required.');
     }
     const record = await User.findOneAndUpdate(
       { _id: Id, isDeleted: false },
@@ -610,68 +273,66 @@ exports.UserListIdDelete = catchAsync(async (req, res, next) => {
       { new: true }
     );
     if (!record) {
-      return res.status(404).json({
-        status: false,
-        message: "User not found or already deleted.",
-      });
+      return errorResponse(res, 'User not found or already deleted.', record);
     }
-
-    res.status(200).json({
-      status: true,
-      data: record,
-      message: "User deleted successfully.",
-    });
+    return successResponse(res, "User deleted successfully.", record, 200)
   } catch (error) {
     console.error("Error deleting user record:", error);
     logger.error("Error deleting user record:", error);
-    res.status(500).json({
-      status: false,
-      message: "Internal Server Error. Please try again later.",
-    });
+    return errorResponse(res, 'Internal Server Error. Please try again later.', errors);
   }
 });
 
-exports.UserUpdate = catchAsync(async (req, res, next) => {
+
+
+exports.profilegettoken = catchAsync(async (req, res) => {
   try {
-    const { Id, email, username, address, phone_number, city } = req.body;
+    const userId = req?.User?._id;
+
+    if (!userId) {
+      logger.warn("User is not authorized or Token is missing")
+      return validationErrorResponse(res, "User is not authorized or Token is missing")
+    }
+
+    const userprofile = await User.findById(userId).select('-password');
+    if (!userprofile) {
+      logger.error("User profile not found")
+      return errorResponse(res, "User profile not found")
+    }
+
+    successResponse(res, "Profile retrieved successfully", userprofile, 200)
+  } catch (error) {
+    logger.error(error)
+    errorResponse(res, "Failed to fetch profile", error.message,)
+  }
+});
+
+exports.UserUpdate = catchAsync(async (req, res) => {
+  try {
+    console.log("req.body", req.body)
+    const { Id, username, name, email, password, phone_number, role } = req.body;
     if (!Id) {
-      return res.status(400).json({
-        status: false,
-        message: "User ID is required.",
-      });
+      logger.warn({ message: 'User ID is required', });
+      return validationErrorResponse(res, "User ID is required.",)
     }
     const updatedRecord = await User.findByIdAndUpdate(
       Id,
-      { email, username, address, phone_number, city },
+      { username, name, email, password, phone_number, role },
       { new: true, runValidators: true }
     );
 
     if (!updatedRecord) {
-      return res.status(404).json({
-        status: false,
-        message: "User not found!",
-      });
+      logger.error("User not found:");
+      return validationErrorResponse(res, "User not found:")
     }
-    res.status(200).json({
-      status: true,
-      data: updatedRecord,
-      message: "User updated successfully.",
-    });
+    successResponse(res, "User updated successfully.", updatedRecord, 200)
   } catch (error) {
-    console.error("Error updating User record:", error);
     logger.error("Error updating User record:", error);
-
-    res.status(500).json({
-      status: false,
-      message:
-        "An error occurred while updating the User. Please try again later.",
-      error: error.message,
-    });
+    errorResponse(res, "An error occurred while updating the User. Please try again later.", error.message)
   }
 });
 
-exports.forgotlinkrecord = catchAsync(
-  async (req, res) => {
+exports.forgotlinkrecord = catchAsync(async (req, res) => {
     try {
       const { email } = req.body;
       if (!email) {
@@ -698,10 +359,10 @@ exports.forgotlinkrecord = catchAsync(
         subject: "Reset Your Password",
         html: emailHtml,
       });
-  
-  
+
+
       return successResponse(res, "Email has been sent to your registered email");
-  
+
     } catch (error) {
       console.error("Error in forgot password process:", error);
       logger.error("Error in forgot password process:", error);
@@ -734,117 +395,8 @@ exports.forgotpassword = catchAsync(
 );
 
 
-exports.profilegettoken = catchAsync(async (req, res, next) => {
-  try {
-    const userId = req?.User?._id;
-
-    if (!userId) {
-      return res.status(401).json({
-        status: false,
-        message: "User is not authorized or Token is missing",
-      });
-    }
-
-    const userprofile = await User.findById(userId).select('-password');
-    if (!userprofile) {
-      return res.status(404).json({
-        status: false,
-        message: "User profile not found",
-      });
-    }
-
-    res.status(200).json({
-      status: true,
-      data: userprofile,
-      message: "Profile retrieved successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "Failed to fetch profile",
-      error: error.message,
-    });
-  }
-});
-
-// exports.userfilter = catchAsync(async (req, res, next) => {
-//   try {
-//     const { username, user_status } = req.body; // Use req.body for body params, or req.query for query params
-//     let filter = {};
-
-//     // Add `user_status` to filter if it exists
-//     if (user_status) {
-//       filter.user_status = user_status;
-//     }
-
-//     // Add `username` to filter if it's not blank
-//     if (username && username.trim() !== "") {
-//       filter.username = { $regex: `^${username}$`, $options: "i" }; // Exact match with case-insensitive regex
-//     }
-
-//     // Fetch users based on the filter
-//     const users = await User.find(filter).select("-password");
-
-//     // If no users are found, return an appropriate message
-//     if (!users.length) {
-//       return res.status(200).json({
-//         status: false,
-//         message: "No users found for the given filter.",
-//         users: [],
-//       });
-//     }
-
-//     // Return users if found
-//     return res.status(200).json({
-//       status: true,
-//       message: "Users retrieved successfully",
-//       users: users,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching users:", error);
-//     return res.status(500).json({
-//       status: false,
-//       message: "An error occurred while fetching users.",
-//       error: error.message,
-//     });
-//   }
-// });
 
 
 
 
-exports.VerifyUser =catchAsync(
-  async (req, res) => {
-    try {
-      const { token } = req.body;
-      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      const user = await User.findById(decoded.id);
-      if (!user) {
-        return errorResponse(res, "User not found", 404);
-      }
-      user.verified = true;
-      await user.save();
-      return successResponse(res, "Password has been successfully reset");
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        return errorResponse(res, "Token has expired. Please contact support.", 401);
-      }
-      console.error("Error in verifying account:", error);
-      logger.error("Error in verifying account:", error);
-      return errorResponse(res, "Failed to verify account");
-    }
-  }
-);
 
-
-
-// dashboardApi
-
-
-
-// if (username) {
-//   // Perform an exact match instead of regex if required
-//   filter.username = username;  // Use exact match
-//   // Or if you want partial match, uncomment below and comment out above line
-//   // filter.username = { $regex: `^${username}$`, $options: 'i' };
-// }

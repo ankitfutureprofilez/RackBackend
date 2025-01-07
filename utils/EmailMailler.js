@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const Loggers = require('./Logger');
 
 const sendEmail = async (data) => {
     const { email, name, message, package, payment_id, subject, emailTemplate } = data;
@@ -9,7 +10,7 @@ const sendEmail = async (data) => {
         secure: true,
         auth: {
             user: process.env.EMAIL_USER,
-            pass:  process.env.EMAIL_PASS, // Replace with the app-specific password
+            pass: process.env.EMAIL_PASS, // Replace with the app-specific password
         },
         debug: true, // Debug mode
     });
@@ -27,6 +28,7 @@ const sendEmail = async (data) => {
         let info = await transporter.sendMail(mailOptions);
         console.log('Email sent:', info.messageId);
     } catch (error) {
+        Loggers.error('Error sending email:', error);
         console.error('Error sending email:', error);
         throw error; // Rethrow the error to be caught in the controller
     }
