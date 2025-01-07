@@ -96,7 +96,7 @@ exports.signup = catchAsync(async (req, res) => {
 
     const result = await record.save();
 
-    return successResponse(res, "SucessFully Signup", 200);
+    return successResponse(res, "SucessFully Signup", result , 200);
 
   } catch (error) {
     return errorResponse(res, error.message || "Internal Server Error", 500);
