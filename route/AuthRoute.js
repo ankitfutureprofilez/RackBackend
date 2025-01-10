@@ -1,7 +1,7 @@
 const Express = require("express")
 const AuthRouter = Express.Router();
-const { signup, login, resetpassword, UserGet, updateUserStatus, UserListIdDelete, verifyToken, profilegettoken, UserUpdate, forgotlinkrecord, forgotpassword } = require("../controller/AuthController");
-
+const { signup, login, resetpassword, UserGet, updateUserStatus, UserListIdDelete, profilegettoken, UserUpdate, forgotlinkrecord, forgotpassword, verifyToken } = require("../controller/AuthController");
+const {checkPermission} = require('../middleware/rbacMiddleware');
 AuthRouter.post("/signup", signup);
 
 AuthRouter.post("/login", login);
@@ -18,9 +18,11 @@ AuthRouter.get("/user-get", verifyToken, profilegettoken);
 
 AuthRouter.put("/update-user", UserUpdate);
 
-AuthRouter.put("/forget-user", forgotlinkrecord);
+AuthRouter.post("/forget-user", forgotlinkrecord);
 
-AuthRouter.put("/forget-password", forgotpassword);
+AuthRouter.post("/forget-password", forgotpassword);
+
+AuthRouter.get("/check",verifyToken, checkPermission('view_record'), UserGet);
 
 
 module.exports = AuthRouter

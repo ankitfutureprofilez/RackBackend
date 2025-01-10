@@ -5,9 +5,10 @@ const { promisify } = require("util");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const ForgetPassword = require("../emailTemplates/ForgetPassword");
-const { validationErrorResponse, errorResponse, successResponse } = require("../utils/ErrorHandling");
-const logger = require("../utils/Logger");
-
+const { v4: uuidv4 } = require('uuid');
+const logger = require('../utils/Logger');
+const { errorResponse, successResponse, validationErrorResponse } = require("../utils/ErrorHandling");
+const uuid = uuidv4()
 exports.verifyToken = async (req, res, next) => {
   try {
     let authHeader = req.headers.authorization || req.headers.Authorization;
@@ -89,14 +90,15 @@ exports.signup = catchAsync(async (req, res) => {
       return errorResponse(res, 'Email or phone number already exists', errors);
     }
     const hashedPassword = await bcrypt.hash(password, 12);
+    const userId = uuid;
     const record = new User({
-      username, name, email, phone_number, role,
+      username, name, email, phone_number, role, userId,
       password: hashedPassword,
     });
 
     const result = await record.save();
 
-    return successResponse(res, "SucessFully Signup", result , 200);
+    return successResponse(res, "SucessFully Signup", result, 200);
 
   } catch (error) {
     return errorResponse(res, error.message || "Internal Server Error", 500);
@@ -139,10 +141,10 @@ exports.login = catchAsync(async (req, res) => {
     //     message: "Your account is not verified. Please verify it.",
     //   });
     // }
-    if (role !== "staff") {
-      logger.error("Access denied. Only user can log in.")
-      return validationErrorResponse(res, 'Access denied. Only user can log in.');
-    }
+    // if (role !== "staff") {
+    //   logger.error("Access denied. Only user can log in.")
+    //   return validationErrorResponse(res, 'Access denied. Only user can log in.');
+    // }
     const token = await signToken(user._id);
     return successResponse(res, "Login Successfully!", token, 200);
 
@@ -283,7 +285,6 @@ exports.profilegettoken = catchAsync(async (req, res) => {
 
 exports.UserUpdate = catchAsync(async (req, res) => {
   try {
-    console.log("req.body", req.body)
     const { Id, username, name, email, password, phone_number, role } = req.body;
     if (!Id) {
       logger.warn({ message: 'User ID is required', });
@@ -366,3 +367,11 @@ exports.forgotpassword = catchAsync(async (req, res) => {
   }
 }
 );
+
+exports.check = catchAsync(async (req, res) => {
+  try {
+  successResponse(res, "Successfully hit the route!", 201);      
+  } catch (error) {
+    return errorResponse(res, error.message || "Internal Server Error", 500);
+  }
+});

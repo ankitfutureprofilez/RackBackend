@@ -1,10 +1,15 @@
 const mongoose = require("mongoose");
-
+const passportLocalMongoose = require('passport-local-mongoose');
 const userSchema = mongoose.Schema(
     {
         username: {
             type: String,
             required: [true, "Please provide a username"],
+            unique: true,
+        },
+        userId: {
+            type: String,
+            required: [true, "Please provide a userId"],
             unique: true,
         },
         name: {
@@ -32,8 +37,8 @@ const userSchema = mongoose.Schema(
         role: {
             type: String,
             required: [true, "User role is required"],
-            default: "staff",
-            enum: ["staff", "admin"],
+            default: "welding",
+            enum: ["welding", "dispatch", "sewing", "admin", "supervisor", "finance", "inventory", "inspection" , "teamleader"],
         },
         user_status: {
             type: String,
@@ -48,6 +53,7 @@ const userSchema = mongoose.Schema(
     { timestamps: true }
 );
 
+userSchema.plugin(passportLocalMongoose);
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;

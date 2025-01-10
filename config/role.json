@@ -1,0 +1,77 @@
+{
+    "roles": [
+        {
+            "name": "admin",
+            "permissions": [
+                "create_record",
+                "read_record",
+                "update_record",
+                "delete_record",
+                "view_record"
+            ]
+        },
+        {
+            "name": "teamleader",
+            "permissions": [
+                "create_record",
+                "read_record",
+                "update_record",
+                "delete_record"
+            ]
+        },
+        {
+            "name": "inspection",
+            "permissions": [
+                "create_record",
+                "read_record",
+                "update_record",
+                "delete_record"
+            ]
+        },
+        {
+            "name": "inventory",
+            "permissions": [
+                "create_record",
+                "read_record",
+                "update_record",
+                "delete_record"
+            ]
+        },
+        {
+            "name": "finance",
+            "permissions": [
+                "create_record",
+                "read_record",
+                "update_record"
+            ]
+        },
+        {
+            "name": "supervisor",
+            "permissions": [
+                "create_record",
+                "read_record"
+            ]
+        },
+        {
+            "name": "sewing",
+            "permissions": [
+                "create_record",
+                "read_record"
+            ]
+        },
+        {
+            "name": "dispatch",
+            "permissions": [
+                "create_record",
+                "read_record"
+            ]
+        },
+        {
+            "name": "welding",
+            "permissions": [
+                "create_record",
+                "read_record"
+            ]
+        }
+    ]
+}

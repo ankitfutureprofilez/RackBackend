@@ -6,6 +6,9 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const UserRoute = require("./route/AuthRoute");
+const RackRoute = require("./route/RackRoute");
+const TruckRoute = require("./route/TruckRoute");
+const InvoentryRoute = require("./route/Inventory")
 const logger = require("./utils/Logger");
 
 const corsOptions = {
@@ -31,7 +34,10 @@ app.get("/", (req, res) => {
 });
 
 // Routing 
-app.use("/auth", UserRoute)
+app.use("/auth", UserRoute);
+app.use("/rack", RackRoute);
+app.use("/truck", TruckRoute);
+app.use("/inventory", InvoentryRoute);
 
 
-app.listen(PORT, () =>(logger.http("Server is running at port : " + PORT)) );
+app.listen(PORT, () => (logger.http("Server is running at port : " + PORT)));
