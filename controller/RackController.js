@@ -182,17 +182,22 @@ exports.createRackChecklist = catchAsync(async (req, res) => {
             matrials_add = [],
             Rack_id,
         } = req.body;
-        const Rack_checklist_id = uuid;
-        if (!Rack_checklist_id) {
-            Loggers.warn("Rack Checklist ID are required")
-            return validationErrorResponse(res, 'Rack Checklist ID are required');
-        }
+
         const rackExists = await RackModal.findOne(Rack_id);
         if (!rackExists) {
             Loggers.warn("Rack not found")
             return validationErrorResponse(res, 'Rack not found');
         }
-
+        const checklistExists = await Rackchecklistmodal.findOne(Rack_id );
+        if (checklistExists) {
+            Loggers.warn("Rack checklist already exists");
+            return validationErrorResponse(res, 'Rack checklist already exists');
+        }
+        const Rack_checklist_id = uuid;
+        if (!Rack_checklist_id) {
+            Loggers.warn("Rack Checklist ID are required")
+            return validationErrorResponse(res, 'Rack Checklist ID are required');
+        }
         const newRackChecklist = new Rackchecklistmodal({
             Rack_checklist_id,
             inspected,
@@ -239,15 +244,7 @@ exports.createRackChecklist = catchAsync(async (req, res) => {
             stnclrst,
             straprpr,
             strfrme,
-            tchpaint,
-            tongrpl,
-            tongrpr,
-            welding,
-            wheelrpl,
-            wheelrpr,
-            wheelsha,
-            matrials_add,
-            Rack_id: rackExists?._id,
+            tchpaint,  tongrpl,tongrpr, welding, wheelrpl,  wheelrpr,wheelsha, matrials_add,  Rack_id: rackExists?._id,
             user_roles: [{
                 user_id: userprofile._id,
                 role: userprofile?.role,
