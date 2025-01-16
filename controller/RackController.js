@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const Loggers = require('../utils/Logger');
 const truck = require("../model/TruckModal");
 const Rackchecklistmodal = require("../model/RackCheckModal");
+const User = require("../model/AuthModal");
 const uuid = uuidv4()
 
 exports.createrack = catchAsync(async (req, res) => {
@@ -47,6 +48,7 @@ exports.createrack = catchAsync(async (req, res) => {
 exports.getallrack = catchAsync(async (req, res) => {
     try {
         const result = await RackModal.find({}).populate("TruckId");
+        console.log("result",result)
         return successResponse(res, "All Racks with Checklist", result, 200);
     } catch (error) {
         return errorResponse(res, error.message || "Internal Server Error", 500);
@@ -61,7 +63,10 @@ exports.getrackbyid = catchAsync(async (req, res) => {
         if (!result) {
             return errorResponse(res, "Rack not found", 404);
         }
-        const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id }).populate("user_roles.user_id");
+        const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id }).populate({
+            path :"user_roles.user_id" ,
+            select :"-password"
+        });
         return successDataResponse(res, "Rack Found", result, Rack_data, 200);
     } catch (error) {
         console.error(`Error fetching rack: ${error.message}`);
@@ -112,6 +117,16 @@ exports.deleterack = catchAsync(async (req, res) => {
 
 exports.createRackChecklist = catchAsync(async (req, res) => {
     try {
+        const userId = req?.User?._id;
+        if (!userId) {
+            Loggers.warn("User is not authorized or Token is missing")
+            return validationErrorResponse(res, "User is not authorized or Token is missing")
+        }
+        const userprofile = await User.findById(userId).select('-password');
+        if (!userprofile) {
+            Loggers.error("User profile not found")
+            return errorResponse(res, "User profile not found")
+        }
         const {
             inspected,
             Arm_replace,
@@ -233,6 +248,10 @@ exports.createRackChecklist = catchAsync(async (req, res) => {
             wheelsha,
             matrials_add,
             Rack_id: rackExists?._id,
+            user_roles: [{
+                user_id: userprofile._id,
+                role: userprofile?.role,
+            }],
         });
         const savedRackChecklist = await newRackChecklist.save();
         return successResponse(res, 'Rack Checklist created successfully', savedRackChecklist, 201);
@@ -244,6 +263,16 @@ exports.createRackChecklist = catchAsync(async (req, res) => {
 });
 
 exports.updaterackchecklist = catchAsync(async (req, res) => {
+    const userId = req?.User?._id;
+        if (!userId) {
+            Loggers.warn("User is not authorized or Token is missing")
+            return validationErrorResponse(res, "User is not authorized or Token is missing")
+        }
+        const userprofile = await User.findById(userId).select('-password');
+        if (!userprofile) {
+            Loggers.error("User profile not found")
+            return errorResponse(res, "User profile not found")
+        }
     try {
         const { Rack_checklist_id } = req.params;
         const {
@@ -300,7 +329,6 @@ exports.updaterackchecklist = catchAsync(async (req, res) => {
             wheelsha,
             matrials_add,
         } = req.body;
-        console.log(`Fetching rack with ID: ${Rack_checklist_id}`);
         const rack = await Rackchecklistmodal.findOneAndUpdate({ Rack_checklist_id }, {
             inspected,
             Arm_replace,
@@ -355,11 +383,37 @@ exports.updaterackchecklist = catchAsync(async (req, res) => {
             wheelsha,
             matrials_add,
         }, { new: true });
+        const existingUserRole = rack.user_roles.find(role => role.user_id.equals(userprofile._id));
+        if (!existingUserRole) {
+            // Add new user role
+            rack.user_roles.push({
+                user_id: userprofile._id,
+                role: userprofile?.role,
+            });
+        }
+
+        await rack.save();
         if (!rack) {
             return errorResponse(res, "Rack not found", 404);
         }
         return successResponse(res, "Rack updated successfully", rack, 200);
     } catch (error) {
+        return errorResponse(res, error.message || "Internal Server Error", 500);
+    }
+});
+
+exports.getrackbynumber = catchAsync(async (req, res) => {
+    try {
+        const { rack_number } = req.params;
+        console.log(`Fetching rack with ID: ${rack_number}`);
+        const result = await RackModal.findOne({ rack_number: rack_number });
+        if (!result) {
+            return errorResponse(res, "Rack not found", 404);
+        }
+        const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id }).populate("user_roles.user_id");
+        return successDataResponse(res, "Rack Found", result, Rack_data, 200);
+    } catch (error) {
+        console.error(`Error fetching rack: ${error.message}`);
         return errorResponse(res, error.message || "Internal Server Error", 500);
     }
 });

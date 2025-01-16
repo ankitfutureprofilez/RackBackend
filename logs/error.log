@@ -4,3 +4,16 @@
 2025-01-09 11:08:07 [ERROR]: All fields are required
 2025-01-09 16:40:31 [ERROR]: Please choose correct truck
 2025-01-10 11:53:59 [ERROR]: Access denied. Only user can log in.
+2025-01-16 16:56:26 [ERROR]: Invalid Email or password
+2025-01-16 16:57:52 [ERROR]: Error creating Rack Checklist: User is not defined
+2025-01-16 16:58:34 [ERROR]: Error creating Rack Checklist: User is not defined
+2025-01-16 16:58:56 [ERROR]: Error creating Rack Checklist: User is not defined
+2025-01-16 16:59:20 [ERROR]: Error creating Rack Checklist: User is not defined
+2025-01-16 16:59:47 [ERROR]: Error creating Rack Checklist: User is not defined
+2025-01-16 16:59:49 [ERROR]: Error creating Rack Checklist: User is not defined
+2025-01-16 17:00:09 [ERROR]: Error creating Rack Checklist: Cannot read properties of undefined (reading '_id')
+2025-01-16 17:00:19 [ERROR]: Error creating Rack Checklist: Cannot read properties of undefined (reading '_id')
+2025-01-16 17:14:44 [ERROR]: Invalid Email or password
+2025-01-16 17:15:14 [ERROR]: Incorrect password. Please try again.
+2025-01-16 17:16:23 [ERROR]: Error updating rack checklist: Cast to ObjectId failed for value "a8d8c1c7-fddd-41ac-96a2-3d15f4919352" (type string) at path "_id" for model "RackCheck"
+2025-01-16 17:16:27 [ERROR]: Error updating rack checklist: Cast to ObjectId failed for value "a8d8c1c7-fddd-41ac-96a2-3d15f4919352" (type string) at path "_id" for model "RackCheck"

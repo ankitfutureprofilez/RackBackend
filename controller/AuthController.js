@@ -83,6 +83,11 @@ exports.signup = catchAsync(async (req, res) => {
       return validationErrorResponse(res, 'All fields are required');
     }
 
+       // Validate phone number length
+       if (!/^\d{10}$/.test(phone_number)) {
+        return validationErrorResponse(res, 'Phone number must be exactly 10 digits');
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
     const userId = uuid;
     const record = new User({
