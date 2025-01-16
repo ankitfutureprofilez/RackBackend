@@ -14,7 +14,7 @@ const RackModal = mongoose.Schema({
     },
     TruckId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Truck",
+        ref: "truck",
         required: [true, "Truck ID is required."],
     },
     status: {

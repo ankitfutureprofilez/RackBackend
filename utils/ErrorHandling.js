@@ -25,8 +25,19 @@ const validationErrorResponse = (res, errors, message, statusCode = 400) => {
   });
 };
 
+const successDataResponse = (res, message, data, result, statusCode = 200) => {
+  return res.json({
+    statusCode,
+    status: "success",
+    message: message,
+    data: data,
+    result :result
+  });
+};
+
 module.exports = {
   successResponse,
   errorResponse,
   validationErrorResponse,
+  successDataResponse
 };

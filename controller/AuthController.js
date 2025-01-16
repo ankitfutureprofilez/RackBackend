@@ -69,41 +69,38 @@ const signEmail = async (id) => {
 };
 
 exports.signup = catchAsync(async (req, res) => {
+  User.syncIndexes()
+    .then(() => {
+      console.log('Indexes synced successfully');
+    })
+    .catch((err) => {
+      console.error('Error syncing indexes:', err.message);
+    });
   try {
     const { username, name, email, password, phone_number, role } = req.body;
     if (!password || !phone_number || !username || !email || !name || !role) {
-      logger.error({
-        message: 'All fields are required',
-      });
+      logger.error({ message: 'All fields are required' });
       return validationErrorResponse(res, 'All fields are required');
     }
-    const existingUser = await User.findOne({ $or: [{ email }, { phone_number }] });
-    if (existingUser) {
-      const errors = {};
-      if (existingUser.email === email) {
-        errors.email = 'Email is already in use!';
-      }
-      if (existingUser.phone_number === phone_number) {
-        errors.phone_number = 'Phone number is already in use!';
-      }
-      logger.error(errors)
-      return errorResponse(res, 'Email or phone number already exists', errors);
-    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
     const userId = uuid;
     const record = new User({
       username, name, email, phone_number, role, userId,
       password: hashedPassword,
     });
-
     const result = await record.save();
-
-    return successResponse(res, "SucessFully Signup", result, 200);
-
+    return successResponse(res, "Successfully Signed Up", result, 200);
   } catch (error) {
+    if (error.code === 11000) {
+      const errorField = Object.keys(error.keyValue)[0];
+      const errorMessage = `${errorField} is already in use!`;
+      return errorResponse(res, errorMessage, error);
+    }
     return errorResponse(res, error.message || "Internal Server Error", 500);
   }
 });
+
 
 exports.login = catchAsync(async (req, res) => {
   try {
@@ -370,7 +367,7 @@ exports.forgotpassword = catchAsync(async (req, res) => {
 
 exports.check = catchAsync(async (req, res) => {
   try {
-  successResponse(res, "Successfully hit the route!", 201);      
+    successResponse(res, "Successfully hit the route!", 201);
   } catch (error) {
     return errorResponse(res, error.message || "Internal Server Error", 500);
   }

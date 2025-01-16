@@ -1,0 +1,70 @@
+const mongoose = require("mongoose");
+
+const Rackchecklist = mongoose.Schema({
+    Rack_checklist_id: {
+        type: String, 
+        required: [true, "Rack Checklist Id is required"]
+    },
+    inspected: { type: Number, default: 0 },
+    Arm_replace: { type: Number, default: 0 },
+    Breact_replace: { type: Number, default: 0 },
+    Breack_replair: { type: Number, default: 0 },
+    cable_replace: { type: Number, default: 0 },
+    cable_replair: { type: Number, default: 0 },
+    caster_rig_replace: { type: Number, default: 0 },
+    caster_rig_repair: { type: Number, default: 0 },
+    curtain_replace: { type: Number, default: 0 },
+    curtain_repair: { type: Number, default: 0 },
+    dumange_replace: { type: Number, default: 0 },
+    dumange_repair: { type: Number, default: 0 },
+    fork_guide_replace: { type: Number, default: 0 },
+    fork_guide_repair: { type: Number, default: 0 },
+    gate_replace: { type: Number, default: 0 },
+    gate_repair: { type: Number, default: 0 },
+    hitch_replace: { type: Number, default: 0 },
+    hitch_repair: { type: Number, default: 0 },
+    kickplate_replace: { type: Number, default: 0 },
+    kickplate_repair: { type: Number, default: 0 },
+    latch_repair: { type: Number, default: 0 },
+    latch_replace: { type: Number, default: 0 },
+    latch_ramp: { type: Number, default: 0 },
+    lid_replace: { type: Number, default: 0 },
+    lid_repair: { type: Number, default: 0 },
+    lock_all: { type: Number, default: 0 },
+    scrap: { type: Number, default: 0 },
+    other: { type: Number, default: 0 },
+    placeApp: { type: Number, default: 0 },
+    repaint: { type: Number, default: 0 },
+    Rifdcomm: { type: Number, default: 0 },
+    Rifdrasn: { type: Number, default: 0 },
+    rifdtgrp: { type: Number, default: 0 },
+    Sewrpr: { type: Number, default: 0 },
+    shlfrpr: { type: Number, default: 0 },
+    shlfrpl: { type: Number, default: 0 },
+    shockinp: { type: Number, default: 0 },
+    shockrpl: { type: Number, default: 0 },
+    shockrpr: { type: Number, default: 0 },
+    Stcapapp: { type: Number, default: 0 },
+    stcptgap: { type: Number, default: 0 },
+    stnclrst: { type: Number, default: 0 },
+    straprpr: { type: Number, default: 0 },
+    strfrme: { type: Number, default: 0 },
+    tchpaint: { type: Number, default: 0 },
+    tongrpl: { type: Number, default: 0 },
+    tongrpr: { type: Number, default: 0 },
+    welding: { type: Number, default: 0 },
+    wheelrpl: { type: Number, default: 0 },
+    wheelrpr: { type: Number, default: 0 },
+    wheelsha: { type: Number, default: 0 },
+    matrials_add: { type: Array, default: [] },
+    Rack_id: { type: mongoose.Schema.Types.ObjectId, ref: "Rack" },
+    user_roles: [{
+        user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        role: { type: String, enum: ["inspection", "welding", "sewing"] }
+    }],
+
+});
+
+const rackchecklistmodal = mongoose.model("RackCheck", Rackchecklist);
+
+module.exports = rackchecklistmodal;

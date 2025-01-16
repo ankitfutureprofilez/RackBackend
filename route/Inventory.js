@@ -1,15 +1,15 @@
 const express = require("express");
 const Route = express.Router();
-const { InvertoryAdd, InvertoryGet, InvertoryGetId, InvertoryUpdateId, InvertoryDeleteId } = require("../controller/InventoryController");
+const { InventoryAdd, InventoryDeleteId, InventoryUpdateId, InventoryGetId, InventoryGet } = require("../controller/InventoryController");
 
-Route.post("/create", InvertoryAdd);
+Route.post("/create", InventoryAdd);
 
-Route.get("/all", InvertoryGet)
+Route.get("/all", InventoryGet)
 
-Route.get("/get/:Id", InvertoryGetId);
+Route.get("/get/:Id", InventoryGetId);
 
-Route.put("/update/:Id", InvertoryUpdateId);
+Route.put("/update/:Id", InventoryUpdateId);
 
-Route.delete("/delete/:Id", InvertoryDeleteId);
+Route.delete("/delete/:Id", InventoryDeleteId);
 
 module.exports = Route;   

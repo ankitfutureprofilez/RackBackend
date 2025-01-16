@@ -1,11 +1,11 @@
 const RackModal = require("../model/RackModal");
 const catchAsync = require("../utils/catchAsync");
-const { errorResponse, successResponse, validationErrorResponse } = require("../utils/ErrorHandling");
+const { errorResponse, successResponse, validationErrorResponse, successDataResponse } = require("../utils/ErrorHandling");
 const { v4: uuidv4 } = require('uuid');
 const Loggers = require('../utils/Logger');
 const truck = require("../model/TruckModal");
+const Rackchecklistmodal = require("../model/RackCheckModal");
 const uuid = uuidv4()
-
 
 exports.createrack = catchAsync(async (req, res) => {
     try {
@@ -17,29 +17,29 @@ exports.createrack = catchAsync(async (req, res) => {
             });
             return validationErrorResponse(res, 'All fields are required');
         }
-        const Trucknumber = await truck.findOne({ truck_id}) 
+        const Trucknumber = await truck.findOne({ truck_id })
         if (!Trucknumber) {
             Loggers.error({
                 message: 'Please choose correct truck',
             });
-            return validationErrorResponse(res, 'Please choose correct truck' );
+            return validationErrorResponse(res, 'Please choose correct truck');
         }
-      
+
         const RackNumber = await RackModal.findOne({ rack_number: rack_number });
         if (RackNumber) {
             return successResponse(res, "Rack already exist ", RackNumber, 200);
         } else {
             const record = new RackModal({
                 rack_number,
-                TruckId : Trucknumber?._id,
-                 rack_id
+                TruckId: Trucknumber?._id,
+                rack_id
             });
             const result = await record.save();
             return successResponse(res, "Rack Created ", result, 200);
         }
 
     } catch (error) {
-        console.log("error" ,error)
+        console.log("error", error)
         return errorResponse(res, error.message || "Internal Server Error", 500);
     }
 });
@@ -47,7 +47,7 @@ exports.createrack = catchAsync(async (req, res) => {
 exports.getallrack = catchAsync(async (req, res) => {
     try {
         const result = await RackModal.find({}).populate("TruckId");
-        return successResponse(res, "All Racks ", result, 200);
+        return successResponse(res, "All Racks with Checklist", result, 200);
     } catch (error) {
         return errorResponse(res, error.message || "Internal Server Error", 500);
     }
@@ -57,19 +57,17 @@ exports.getrackbyid = catchAsync(async (req, res) => {
     try {
         const { Id } = req.params;
         console.log(`Fetching rack with ID: ${Id}`);
-
         const result = await RackModal.findOne({ rack_id: Id });
         if (!result) {
             return errorResponse(res, "Rack not found", 404);
         }
-
-        return successResponse(res, "Rack Found", result, 200);
+        const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id }).populate("user_roles.user_id");
+        return successDataResponse(res, "Rack Found", result, Rack_data, 200);
     } catch (error) {
         console.error(`Error fetching rack: ${error.message}`);
         return errorResponse(res, error.message || "Internal Server Error", 500);
     }
 });
-
 
 exports.updaterack = catchAsync(async (req, res) => {
     try {
@@ -93,14 +91,275 @@ exports.updaterack = catchAsync(async (req, res) => {
 exports.deleterack = catchAsync(async (req, res) => {
     try {
         const { rack_id } = req.params;
-        const rack = await RackModal.findByIdAndDelete(rack_id);
+        const rack = await RackModal.findOne({ rack_id });
         if (!rack) {
             return errorResponse(res, "Rack not found", 404);
         }
-        return successResponse(res, "Rack deleted successfully", null, 204);
+        const rackChecklist = await Rackchecklistmodal.findOneAndDelete({ Rack_id: rack._id });
+        if (!rackChecklist) {
+            return errorResponse(res, "Associated rack checklist not found", 404);
+        }
+        const record = await RackModal.findByIdAndDelete(rack?._id);
+        if (!record) {
+            return errorResponse(res, "Rack not found", 404);
+        }
+        return successResponse(res, "Rack and its associated checklist deleted successfully", null, 204);
     } catch (error) {
+        console.error(`Error deleting rack: ${error.message}`);
         return errorResponse(res, error.message || "Internal Server Error", 500);
     }
 });
 
+exports.createRackChecklist = catchAsync(async (req, res) => {
+    try {
+        const {
+            inspected,
+            Arm_replace,
+            Breact_replace,
+            Breack_replair,
+            cable_replace,
+            cable_replair,
+            caster_rig_replace,
+            caster_rig_repair,
+            curtain_replace,
+            curtain_repair,
+            dumange_replace,
+            dumange_repair,
+            fork_guide_replace,
+            fork_guide_repair,
+            gate_replace,
+            gate_repair,
+            hitch_replace,
+            hitch_repair,
+            kickplate_replace,
+            kickplate_repair,
+            latch_repair,
+            latch_replace,
+            latch_ramp,
+            lid_replace,
+            lid_repair,
+            lock_all,
+            scrap,
+            other,
+            placeApp,
+            repaint,
+            Rifdcomm,
+            Rifdrasn,
+            rifdtgrp,
+            Sewrpr,
+            shlfrpr,
+            shlfrpl,
+            shockinp,
+            shockrpl,
+            shockrpr,
+            Stcapapp,
+            stcptgap,
+            stnclrst,
+            straprpr,
+            strfrme,
+            tchpaint,
+            tongrpl,
+            tongrpr,
+            welding,
+            wheelrpl,
+            wheelrpr,
+            wheelsha,
+            matrials_add = [],
+            Rack_id,
+        } = req.body;
+        const Rack_checklist_id = uuid;
+        if (!Rack_checklist_id) {
+            Loggers.warn("Rack Checklist ID are required")
+            return validationErrorResponse(res, 'Rack Checklist ID are required');
+        }
+        const rackExists = await RackModal.findOne(Rack_id);
+        if (!rackExists) {
+            Loggers.warn("Rack not found")
+            return validationErrorResponse(res, 'Rack not found');
+        }
 
+        const newRackChecklist = new Rackchecklistmodal({
+            Rack_checklist_id,
+            inspected,
+            Arm_replace,
+            Breact_replace,
+            Breack_replair,
+            cable_replace,
+            cable_replair,
+            caster_rig_replace,
+            caster_rig_repair,
+            curtain_replace,
+            curtain_repair,
+            dumange_replace,
+            dumange_repair,
+            fork_guide_replace,
+            fork_guide_repair,
+            gate_replace,
+            gate_repair,
+            hitch_replace,
+            hitch_repair,
+            kickplate_replace,
+            kickplate_repair,
+            latch_repair,
+            latch_replace,
+            latch_ramp,
+            lid_replace,
+            lid_repair,
+            lock_all,
+            scrap,
+            other,
+            placeApp,
+            repaint,
+            Rifdcomm,
+            Rifdrasn,
+            rifdtgrp,
+            Sewrpr,
+            shlfrpr,
+            shlfrpl,
+            shockinp,
+            shockrpl,
+            shockrpr,
+            Stcapapp,
+            stcptgap,
+            stnclrst,
+            straprpr,
+            strfrme,
+            tchpaint,
+            tongrpl,
+            tongrpr,
+            welding,
+            wheelrpl,
+            wheelrpr,
+            wheelsha,
+            matrials_add,
+            Rack_id: rackExists?._id,
+        });
+        const savedRackChecklist = await newRackChecklist.save();
+        return successResponse(res, 'Rack Checklist created successfully', savedRackChecklist, 201);
+
+    } catch (error) {
+        Loggers.error('Error creating Rack Checklist:', error);
+        return errorResponse(res, error.message || 'Internal Server Error', 500);
+    }
+});
+
+exports.updaterackchecklist = catchAsync(async (req, res) => {
+    try {
+        const { Rack_checklist_id } = req.params;
+        const {
+            inspected,
+            Arm_replace,
+            Breact_replace,
+            Breack_replair,
+            cable_replace,
+            cable_replair,
+            caster_rig_replace,
+            caster_rig_repair,
+            curtain_replace,
+            curtain_repair,
+            dumange_replace,
+            dumange_repair,
+            fork_guide_replace,
+            fork_guide_repair,
+            gate_replace,
+            gate_repair,
+            hitch_replace,
+            hitch_repair,
+            kickplate_replace,
+            kickplate_repair,
+            latch_repair,
+            latch_replace,
+            latch_ramp,
+            lid_replace,
+            lid_repair,
+            lock_all,
+            scrap,
+            other,
+            placeApp,
+            repaint,
+            Rifdcomm,
+            Rifdrasn,
+            rifdtgrp,
+            Sewrpr,
+            shlfrpr,
+            shlfrpl,
+            shockinp,
+            shockrpl,
+            shockrpr,
+            Stcapapp,
+            stcptgap,
+            stnclrst,
+            straprpr,
+            strfrme,
+            tchpaint,
+            tongrpl,
+            tongrpr,
+            welding,
+            wheelrpl,
+            wheelrpr,
+            wheelsha,
+            matrials_add,
+        } = req.body;
+        console.log(`Fetching rack with ID: ${Rack_checklist_id}`);
+        const rack = await Rackchecklistmodal.findOneAndUpdate({ Rack_checklist_id }, {
+            inspected,
+            Arm_replace,
+            Breact_replace,
+            Breack_replair,
+            cable_replace,
+            cable_replair,
+            caster_rig_replace,
+            caster_rig_repair,
+            curtain_replace,
+            curtain_repair,
+            dumange_replace,
+            dumange_repair,
+            fork_guide_replace,
+            fork_guide_repair,
+            gate_replace,
+            gate_repair,
+            hitch_replace,
+            hitch_repair,
+            kickplate_replace,
+            kickplate_repair,
+            latch_repair,
+            latch_replace,
+            latch_ramp,
+            lid_replace,
+            lid_repair,
+            lock_all,
+            scrap,
+            other,
+            placeApp,
+            repaint,
+            Rifdcomm,
+            Rifdrasn,
+            rifdtgrp,
+            Sewrpr,
+            shlfrpr,
+            shlfrpl,
+            shockinp,
+            shockrpl,
+            shockrpr,
+            Stcapapp,
+            stcptgap,
+            stnclrst,
+            straprpr,
+            strfrme,
+            tchpaint,
+            tongrpl,
+            tongrpr,
+            welding,
+            wheelrpl,
+            wheelrpr,
+            wheelsha,
+            matrials_add,
+        }, { new: true });
+        if (!rack) {
+            return errorResponse(res, "Rack not found", 404);
+        }
+        return successResponse(res, "Rack updated successfully", rack, 200);
+    } catch (error) {
+        return errorResponse(res, error.message || "Internal Server Error", 500);
+    }
+});

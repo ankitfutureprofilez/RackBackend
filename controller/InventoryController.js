@@ -1,4 +1,4 @@
-const InvoentryModal = require("../model/Invoentry");
+const InventoryModal = require("../model/Inventory");
 const catchAsync = require("../utils/catchAsync");
 const { errorResponse, successResponse, validationErrorResponse } = require("../utils/ErrorHandling");
 const { v4: uuidv4 } = require('uuid');
@@ -6,7 +6,7 @@ const Loggers = require('../utils/Logger');
 const uuid = uuidv4()
 
 
-exports.InvertoryAdd = catchAsync(async (req, res) => {
+exports.InventoryAdd = catchAsync(async (req, res) => {
     try {
         const { name, quantity, Image, description, categrios } = req.body;
         const inventory_id = uuid;
@@ -16,7 +16,7 @@ exports.InvertoryAdd = catchAsync(async (req, res) => {
             });
             return validationErrorResponse(res, 'All fields are required');
         }
-        const record = new InvoentryModal({
+        const record = new InventoryModal({
             name,
             quantity,
             description,
@@ -33,21 +33,21 @@ exports.InvertoryAdd = catchAsync(async (req, res) => {
     }
 });
 
-exports.InvertoryGet = catchAsync(async (req, res) => {
+exports.InventoryGet = catchAsync(async (req, res) => {
     try {
-        const result = await InvoentryModal.find({}).populate("UserId");
+        const result = await InventoryModal.find({}).populate("UserId");
         return successResponse(res, "All Invoentrys ", result, 200);
     } catch (error) {
         return errorResponse(res, error.message || "Internal Server Error", 500);
     }
 });
 
-exports.InvertoryGetId = catchAsync(async (req, res) => {
+exports.InventoryGetId = catchAsync(async (req, res) => {
     try {
         const { Id } = req.params;
         console.log(`Fetching Invoentry with ID: ${Id}`);
 
-        const result = await InvoentryModal.findOne({ inventory_id: Id });
+        const result = await InventoryModal.findOne({ inventory_id: Id });
         if (!result) {
             return errorResponse(res, "Invoentry not found", 404);
         }
@@ -60,16 +60,16 @@ exports.InvertoryGetId = catchAsync(async (req, res) => {
 });
 
 
-exports.InvertoryUpdateId = catchAsync(async (req, res) => {
+exports.InventoryUpdateId = catchAsync(async (req, res) => {
     try {
         const { Id } = req.params;
         const { name, quantity, Image, description, categrios } = req.body;
         console.log(`Fetching Invoentry with ID: ${Id}`);
-        const result = await InvoentryModal.findOne({ inventory_id: Id });
+        const result = await InventoryModal.findOne({ inventory_id: Id });
         if (!result) {
             return errorResponse(res, "Invoentry not found", 500);
         }
-        const Invoentry = await InvoentryModal.findByIdAndUpdate(result?._id, { name, quantity, Image, description, categrios }, { new: true });
+        const Invoentry = await InventoryModal.findByIdAndUpdate(result?._id, { name, quantity, Image, description, categrios }, { new: true });
         if (!Invoentry) {
             return errorResponse(res, "Invoentry not found", 404);
         }
@@ -79,14 +79,14 @@ exports.InvertoryUpdateId = catchAsync(async (req, res) => {
     }
 });
 
-exports.InvertoryDeleteId = catchAsync(async (req, res) => {
+exports.InventoryDeleteId = catchAsync(async (req, res) => {
     try {
         const { Id } = req.params;
-        const result = await InvoentryModal.findOne({ inventory_id: Id });
+        const result = await InventoryModal.findOne({ inventory_id: Id });
         if (!result) {
             return errorResponse(res, "Invoentry not found", 500);
         }
-        const Invoentry = await InvoentryModal.findByIdAndDelete(result?._id);
+        const Invoentry = await InventoryModal.findByIdAndDelete(result?._id);
         if (!Invoentry) {
             return errorResponse(res, "Invoentry not found", 404);
         }

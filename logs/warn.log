@@ -4,3 +4,7 @@
 2025-01-07 14:29:25 [WARN]: User ID and status are required
 2025-01-10 10:14:09 [WARN]: User is not authorized or Token is missing
 2025-01-10 10:14:34 [WARN]: User is not authorized or Token is missing
+2025-01-15 18:22:42 [WARN]: Rack Checklist ID and Rack ID are required
+2025-01-15 18:23:20 [WARN]: Rack not found
+2025-01-15 18:23:30 [WARN]: Rack not found
+2025-01-15 18:23:53 [WARN]: Rack not found
