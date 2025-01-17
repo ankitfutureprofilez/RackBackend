@@ -8,6 +8,7 @@ const uuid = uuidv4()
 
 exports.InventoryAdd = catchAsync(async (req, res) => {
     try {
+        const UserId = req?.User?._id ;
         const { name, quantity, Image, description, categrios } = req.body;
         const inventory_id = uuid;
         if (!name || !quantity || !Image) {
@@ -22,7 +23,8 @@ exports.InventoryAdd = catchAsync(async (req, res) => {
             description,
             Image,
             categrios,
-            inventory_id
+            inventory_id,
+            UserId :UserId
         });
         const result = await record.save();
         return successResponse(res, "Invoentry Created ", result, 200);
@@ -35,7 +37,12 @@ exports.InventoryAdd = catchAsync(async (req, res) => {
 
 exports.InventoryGet = catchAsync(async (req, res) => {
     try {
-        const result = await InventoryModal.find({}).populate("UserId");
+        const result = await InventoryModal.find({}).populate(
+            {
+                path: 'UserId',
+                select :"name"
+            }
+        );
         return successResponse(res, "All Invoentrys ", result, 200);
     } catch (error) {
         return errorResponse(res, error.message || "Internal Server Error", 500);

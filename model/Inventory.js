@@ -38,7 +38,7 @@ const Inventoryschema = mongoose.Schema({
     UserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        // required: [true, "User ID is required."],
+        required: [true, "User ID is required."],
     },
 });
 

@@ -63,10 +63,11 @@ exports.getrackbyid = catchAsync(async (req, res) => {
         if (!result) {
             return errorResponse(res, "Rack not found", 404);
         }
-        const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id }).populate({
-            path :"user_roles.user_id" ,
-            select :"-password"
-        });
+        const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id })
+        // .populate({
+        //     path :"user_roles.user_id" ,
+        //     select :"-password"
+        // });
         return successDataResponse(res, "Rack Found", result, Rack_data, 200);
     } catch (error) {
         console.error(`Error fetching rack: ${error.message}`);
@@ -407,7 +408,9 @@ exports.getrackbynumber = catchAsync(async (req, res) => {
         if (!result) {
             return errorResponse(res, "Rack not found", 404);
         }
-        const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id }).populate("user_roles.user_id");
+        const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id })
+        // .populate("user_roles.user_id")
+        ;
         return successDataResponse(res, "Rack Found", result, Rack_data, 200);
     } catch (error) {
         console.error(`Error fetching rack: ${error.message}`);

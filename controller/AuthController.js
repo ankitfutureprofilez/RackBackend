@@ -106,11 +106,9 @@ exports.signup = catchAsync(async (req, res) => {
   }
 });
 
-
 exports.login = catchAsync(async (req, res) => {
   try {
-    const { email, password, role } = req.body;
-
+    const { email, password } = req.body;
     if (!email || !password) {
       logger.error({
         message: 'Email and password are required',
