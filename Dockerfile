@@ -1,6 +1,15 @@
 # Use an official Node.js runtime as the base image
 FROM node:18-slim
 
+# Install build tools and Python for bcrypt and node-gyp
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    make \
+    g++ \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set the working directory in the container
 WORKDIR /App
 

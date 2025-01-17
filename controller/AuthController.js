@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const catchAsync = require("../utils/catchAsync");
 const User = require("../model/AuthModal");
 const { promisify } = require("util");
-const bcrypt = require("bcrypt");
+const bcrypt = require('bcryptjs');
 const nodemailer = require("nodemailer");
 const ForgetPassword = require("../emailTemplates/ForgetPassword");
 const { v4: uuidv4 } = require('uuid');
@@ -178,18 +178,20 @@ exports.UserGet = catchAsync(async (req, res) => {
     const limit = parseInt(req.query.limit) || 25;
     const search = req.query.search || "";
     let userData, totalPages, totaluser;
-    const filter = { role: "staff", isDeleted: false };
+    // const filter = { role: "welding", isDeleted: false };
     const skip = (page - 1) * limit;
-    const users = await User.find(filter)
+    const users = await User.find()
       .select("-password")
-      .sort({ created_at: -1 })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+      console.log("users",users)
     if (search === "") {
       const skip = (page - 1) * limit;
       totaluser = await User.countDocuments();
-      userData = await User.find(filter)
-        .sort({ created_at: -1 })
+      // filter
+      userData = await User.find()
+        .sort({      createdAt: -1 })
         .skip(skip)
         .limit(limit)
       totalPages = Math.ceil(totaluser / limit);
@@ -199,6 +201,7 @@ exports.UserGet = catchAsync(async (req, res) => {
       totalPages = 1;
       totaluser = userData;
     }
+    console.log("userData",userData)
     const responseData = {
       userData: userData,
       totaluser: totaluser,
