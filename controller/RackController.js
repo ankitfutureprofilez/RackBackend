@@ -48,7 +48,6 @@ exports.createrack = catchAsync(async (req, res) => {
 exports.getallrack = catchAsync(async (req, res) => {
     try {
         const result = await RackModal.find({}).populate("TruckId");
-        console.log("result",result)
         return successResponse(res, "All Racks with Checklist", result, 200);
     } catch (error) {
         return errorResponse(res, error.message || "Internal Server Error", 500);
@@ -58,7 +57,6 @@ exports.getallrack = catchAsync(async (req, res) => {
 exports.getrackbyid = catchAsync(async (req, res) => {
     try {
         const { Id } = req.params;
-        console.log(`Fetching rack with ID: ${Id}`);
         const result = await RackModal.findOne({ rack_id: Id });
         if (!result) {
             return errorResponse(res, "Rack not found", 404);
@@ -79,7 +77,6 @@ exports.updaterack = catchAsync(async (req, res) => {
     try {
         const { rack_id } = req.params;
         const { rack_number, truck_number } = req.body;
-        console.log(`Fetching rack with ID: ${rack_id}`);
         const result = await RackModal.findOne({ rack_id });
         if (!result) {
             return errorResponse(res, "Rack not found", 404);
@@ -403,7 +400,6 @@ exports.updaterackchecklist = catchAsync(async (req, res) => {
 exports.getrackbynumber = catchAsync(async (req, res) => {
     try {
         const { rack_number } = req.params;
-        console.log(`Fetching rack with ID: ${rack_number}`);
         const result = await RackModal.findOne({ rack_number: rack_number });
         if (!result) {
             return errorResponse(res, "Rack not found", 404);

@@ -52,8 +52,6 @@ exports.InventoryGet = catchAsync(async (req, res) => {
 exports.InventoryGetId = catchAsync(async (req, res) => {
     try {
         const { Id } = req.params;
-        console.log(`Fetching Invoentry with ID: ${Id}`);
-
         const result = await InventoryModal.findOne({ inventory_id: Id });
         if (!result) {
             return errorResponse(res, "Invoentry not found", 404);

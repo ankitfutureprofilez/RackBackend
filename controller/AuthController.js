@@ -185,7 +185,6 @@ exports.UserGet = catchAsync(async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-    console.log("users", users)
     if (search === "") {
       const skip = (page - 1) * limit;
       totaluser = await User.countDocuments();
@@ -201,7 +200,6 @@ exports.UserGet = catchAsync(async (req, res) => {
       totalPages = 1;
       totaluser = userData;
     }
-    console.log("userData", userData)
     const responseData = {
       userData: userData,
       totaluser: totaluser,
