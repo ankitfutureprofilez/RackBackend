@@ -83,9 +83,9 @@ exports.signup = catchAsync(async (req, res) => {
       return validationErrorResponse(res, 'All fields are required');
     }
 
-       // Validate phone number length
-       if (!/^\d{10}$/.test(phone_number)) {
-        return validationErrorResponse(res, 'Phone number must be exactly 10 digits');
+    // Validate phone number length
+    if (!/^\d{10}$/.test(phone_number)) {
+      return validationErrorResponse(res, 'Phone number must be exactly 10 digits');
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -185,13 +185,13 @@ exports.UserGet = catchAsync(async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-      console.log("users",users)
+    console.log("users", users)
     if (search === "") {
       const skip = (page - 1) * limit;
       totaluser = await User.countDocuments();
       // filter
       userData = await User.find()
-        .sort({      createdAt: -1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
       totalPages = Math.ceil(totaluser / limit);
@@ -201,7 +201,7 @@ exports.UserGet = catchAsync(async (req, res) => {
       totalPages = 1;
       totaluser = userData;
     }
-    console.log("userData",userData)
+    console.log("userData", userData)
     const responseData = {
       userData: userData,
       totaluser: totaluser,
