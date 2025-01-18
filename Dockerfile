@@ -1,5 +1,5 @@
 # Stage 1: Build Stage
-FROM node:20.12-alpine3.19 AS build
+FROM node:19.0.0-alpine3.16 AS builder
 
 # Install build tools and Python for bcrypt and node-gyp (needed for dependencies)
 RUN apk add --no-cache \
@@ -28,7 +28,7 @@ FROM node:20.12-alpine3.19
 WORKDIR /App
 
 # Copy only the necessary files from the build stage
-COPY --from=build /App /App
+COPY --from=builder /App /App  
 
 # Expose the application port
 EXPOSE 8080
