@@ -186,7 +186,7 @@ exports.createRackChecklist = catchAsync(async (req, res) => {
             Loggers.warn("Rack not found")
             return validationErrorResponse(res, 'Rack not found');
         }
-        const checklistExists = await Rackchecklistmodal.findOne(Rack_id );
+        const checklistExists = await Rackchecklistmodal.findOne(Rack_id);
         if (checklistExists) {
             Loggers.warn("Rack checklist already exists");
             return validationErrorResponse(res, 'Rack checklist already exists');
@@ -242,7 +242,7 @@ exports.createRackChecklist = catchAsync(async (req, res) => {
             stnclrst,
             straprpr,
             strfrme,
-            tchpaint,  tongrpl,tongrpr, welding, wheelrpl,  wheelrpr,wheelsha, matrials_add,  Rack_id: rackExists?._id,
+            tchpaint, tongrpl, tongrpr, welding, wheelrpl, wheelrpr, wheelsha, matrials_add, Rack_id: rackExists?._id,
             user_roles: [{
                 user_id: userprofile._id,
                 role: userprofile?.role,
@@ -259,15 +259,15 @@ exports.createRackChecklist = catchAsync(async (req, res) => {
 
 exports.updaterackchecklist = catchAsync(async (req, res) => {
     const userId = req?.User?._id;
-        if (!userId) {
-            Loggers.warn("User is not authorized or Token is missing")
-            return validationErrorResponse(res, "User is not authorized or Token is missing")
-        }
-        const userprofile = await User.findById(userId).select('-password');
-        if (!userprofile) {
-            Loggers.error("User profile not found")
-            return errorResponse(res, "User profile not found")
-        }
+    if (!userId) {
+        Loggers.warn("User is not authorized or Token is missing")
+        return validationErrorResponse(res, "User is not authorized or Token is missing")
+    }
+    const userprofile = await User.findById(userId).select('-password');
+    if (!userprofile) {
+        Loggers.error("User profile not found")
+        return errorResponse(res, "User profile not found")
+    }
     try {
         const { Rack_checklist_id } = req.params;
         const {
@@ -405,8 +405,8 @@ exports.getrackbynumber = catchAsync(async (req, res) => {
             return errorResponse(res, "Rack not found", 404);
         }
         const Rack_data = await Rackchecklistmodal.findOne({ Rack_id: result._id })
-        // .populate("user_roles.user_id")
-        ;
+            // .populate("user_roles.user_id")
+            ;
         return successDataResponse(res, "Rack Found", result, Rack_data, 200);
     } catch (error) {
         console.error(`Error fetching rack: ${error.message}`);

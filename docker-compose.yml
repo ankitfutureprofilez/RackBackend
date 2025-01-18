@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/App
+      - /App/node_modules
+    environment:
+      NODE_ENV: development
+    command: npm run dev
