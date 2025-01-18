@@ -10,3 +10,5 @@ Route.put("/update/:Id",  verifyToken, InventoryUpdateId);
 Route.delete("/delete/:Id",  verifyToken, InventoryDeleteId);
 
 module.exports = Route;   
+
+
