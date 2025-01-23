@@ -35,6 +35,12 @@ const Inventoryschema = mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    inventory_status: {
+        type : "String",
+        required: true,
+        default: "active",
+        enum: ["active", "inactive"],
+    },
     UserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

@@ -101,4 +101,42 @@ exports.InventoryDeleteId = catchAsync(async (req, res) => {
     }
 });
 
+exports.InventoryUserUpdate = catchAsync(async (req, res) => {
+    try {
+        const { Id } = req.params;
+        const { name, quantity } = req.body;
+        console.log(`Fetching Invoentry with ID: ${Id}`);
+        const result = await InventoryModal.findOne({ inventory_id: Id });
+        if (!result) {
+            return errorResponse(res, "Invoentry not found", 500);
+        }
+        const Invoentry = await InventoryModal.findByIdAndUpdate(result?._id, { name, quantity }, { new: true });
+        if (!Invoentry) {
+            return errorResponse(res, "Invoentry not found", 404);
+        }
+        return successResponse(res, "Invoentry updated successfully", Invoentry, 200);
+    } catch (error) {
+        return errorResponse(res, error.message || "Internal Server Error", 500);
+    }
+});
+
+
+exports.InventoryUpdateStatus = catchAsync(async (req, res) => {
+    try {
+        const { Id } = req.params;
+        const { inventory_status } = req.body;
+        console.log(`Fetching Invoentry with ID: ${Id}`);
+        const result = await InventoryModal.findOne({ inventory_id: Id });
+        if (!result) {
+            return errorResponse(res, "Invoentry not found", 500);
+        }
+        const Invoentry = await InventoryModal.findByIdAndUpdate(result?._id, { inventory_status }, { new: true });
+        if (!Invoentry) {
+            return errorResponse(res, "Invoentry not found", 404);
+        }
+        return successResponse(res, "Invoentry updated successfully", Invoentry, 200);
+    } catch (error) {
+        return errorResponse(res, error.message || "Internal Server Error", 500);
+    }
+});
 
